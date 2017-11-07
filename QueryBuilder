@@ -1,0 +1,101 @@
+import java.util.Arrays;
+import java.util.List;
+
+//Basic SQL Query Builder using Builder Pattern
+public class QueryBuilder {
+
+    private String tableName;
+    private List<String> columns = null;
+    private List<String> whereClause = null;
+    private String func;
+    private static String ALL = "*";
+    private static final String SELECT = "SELECT ";
+    private static final String FROM = " FROM ";
+    private static final String WHERE = " WHERE ";
+    private static final String AND = " AND ";
+    private static final String OPEN = "(";
+    private static final String CLOSE = ")";
+    private static final String COLUMNS = "@COLUMNS@";
+    private static final String SPACE = " ";
+    private static final String COMMA = ",";
+
+    private QueryBuilder(Builder builder){
+        this.tableName = builder.tableName;
+        this.func = builder.func;
+        this.columns= builder.columns;
+        this.whereClause = builder.whereClause;
+    }
+
+    public String buildQuery(){
+
+        String query = SELECT + getBody() + FROM + tableName + getWhereClause();
+        return query;
+    }
+
+    private String getWhereClause() {
+        String where = "";
+        if(whereClause == null)
+            return where;
+        for(String clause:whereClause){
+            where = where + clause + AND;
+        }
+        where = where.substring(0,where.lastIndexOf(AND));
+        return WHERE + where;
+    }
+
+    private String getBody() {
+        String body = "" ;
+        if (func!=null && !func.isEmpty())
+            body = func + OPEN + COLUMNS + CLOSE;
+        if(columns != null)
+            body = body.contains(COLUMNS)?body.replace(COLUMNS,getColumnListString()):getColumnListString();
+        else
+            body = body.contains(COLUMNS)?body.replace(COLUMNS,ALL):ALL;
+        return body;
+    }
+
+    private String getColumnListString() {
+        String columnList = "";
+        for(String col:columns){
+            columnList = columnList + col + COMMA;
+        }
+        columnList = columnList.substring(0,columnList.length()-1);
+        return columnList;
+    }
+
+    public static class Builder{
+
+        private String tableName;
+        private List<String> columns = null;
+        private List<String> whereClause = null;
+        private String func;
+
+        public Builder(String tableName){
+            this.tableName = tableName;
+        }
+
+        public Builder setColumn(List<String> column){
+            this.columns = column;
+            return this;
+        }
+
+        public Builder setWhereClause(List<String> whereClause){
+            this.whereClause = whereClause;
+            return this;
+        }
+
+        public Builder setfunc(String func){
+            this.func = func;
+            return this;
+        }
+
+        public QueryBuilder build(){
+            return  new QueryBuilder(this);
+        }
+    }
+
+    public  static  void  main(String[] arg){
+        QueryBuilder builder = new Builder("factories").setfunc("COUNT").setColumn(Arrays.asList("AGE","HEIGHT")).setWhereClause(Arrays.asList("age>5","height<4")).build();
+        System.out.println(builder.buildQuery());
+    }
+}
