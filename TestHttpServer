@@ -1,0 +1,83 @@
+import com.sun.net.httpserver.Headers;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.util.Set;
+import java.util.concurrent.Executors;
+
+// Start an Http Server on 54015 port and modify the response code returned by POST request. Set the required response code using PUT request
+public class TestHttpServer {
+    static int count = 0;
+    static int res=200;
+
+    public static void main(String[] args) throws Exception {
+        int port = 54015;
+        HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
+        
+        server.createContext("/", new MyHandler());
+        server.setExecutor(Executors.newCachedThreadPool());
+
+        System.out.println("[HttpReceiver] HttpServer started at "+server.getAddress());
+        server.start();
+       
+    }
+
+    static class MyHandler implements HttpHandler {
+        public void handle(HttpExchange exchange) throws IOException {
+
+            String method = exchange.getRequestMethod();
+            if (method.equals("GET")) {
+                Headers headers = exchange.getRequestHeaders();
+                Set<String> keys = headers.keySet();
+                for(String key : keys) {
+                    System.out.println(key + ":" + headers.get(key));
+                }
+                String response = "The server is up";
+                exchange.sendResponseHeaders(res, response.length());
+                OutputStream os = exchange.getResponseBody();
+                os.write(response.getBytes());
+                os.close();
+            }
+            else if (method.equals("POST")) {
+                Headers headers = exchange.getRequestHeaders();
+                Set<String> keys = headers.keySet();
+                for(String key : keys) {
+                    System.out.println(key + ":" + headers.get(key));
+                }
+                BufferedReader reader = new BufferedReader(new InputStreamReader(exchange.getRequestBody()));
+                String str = reader.readLine();
+                exchange.getResponseHeaders().add("Content-Type", "application/json");
+                exchange.getResponseHeaders().add("Accept", "application/json");
+                exchange.sendResponseHeaders(res,str.length());
+                count ++;
+                System.out.println("------------------------" + count + "------------------");
+                System.out.println("Received :" + str);
+               
+                String response = str ;
+                OutputStream os = exchange.getResponseBody();
+                os.write(response.getBytes());
+                os.close();
+            }
+
+            else if (method.equals("PUT")) {
+                Headers headers = exchange.getRequestHeaders();
+                Set<String> keys = headers.keySet();
+                for(String key : keys) {
+                    System.out.println(key + ":" + headers.get(key));
+                }
+                BufferedReader reader = new BufferedReader(new InputStreamReader(exchange.getRequestBody()));
+                String str = reader.readLine();
+                System.out.print("The PUT sent error code:"+str);
+                res = Integer.parseInt(str);
+                exchange.sendResponseHeaders(200, -1);
+            }
+
+        }
+    }
+}
