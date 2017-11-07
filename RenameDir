@@ -1,0 +1,47 @@
+import java.io.File;
+
+import static java.lang.System.exit;
+
+/**
+ * Created by ppranjal on 7/20/2017.
+ */
+
+//Traverse Directory & Rename long file names 
+public class RenameDir {
+
+    private static String filePath;
+    public static void main(String args[]){
+
+        if (args.length==0)
+        {
+            System.out.print("Please Enter File path for renaming directories");
+            exit(0);
+        }
+        filePath = args[0];
+        RenameDir del = new RenameDir();
+        del.traverseDir(filePath);
+    }
+
+    public boolean traverseDir(String filePath){
+        File dir = new File(filePath);
+        System.out.println("FilePath:"+filePath);
+        if(!dir.isDirectory())
+        {System.out.println("Provided path is not a dir");
+        return false;}
+
+        for(String innerDir:dir.list()){
+            String absolutePath = dir.getAbsolutePath();
+            if(traverseDir(absolutePath + File.separator +innerDir))
+                renameDir(absolutePath,innerDir);
+        }
+        return true;
+    }
+
+
+    private void renameDir(String absolutePath, String innerDir) {
+        System.out.println("Renaming:"+innerDir);
+        File dir = new File(absolutePath + File.separator +innerDir);
+        File newDir = new File(absolutePath + File.separator+innerDir.substring(0,2));
+        dir.renameTo(newDir);
+
+  
